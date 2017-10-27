@@ -8,7 +8,7 @@ namespace Binance.objects.api_responses
 {
     public class Response_AggTrades : APIResponse
     {
-        public AggTrade[] AggTrades { get; set; }
+        public AggTrade[] aggtrades { get; set; }
         public class AggTrade
         {
             public int a { get; set; }

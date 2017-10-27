@@ -8,7 +8,7 @@ namespace Binance.objects.api_responses
 {
     public class Response_AllBookPrices : APIResponse
     {
-        public BookPrice[] BookPrices { get; set; }
+        public BookPrice[] bookprices { get; set; }
         public class BookPrice
         {
             public string symbol { get; set; }

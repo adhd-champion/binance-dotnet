@@ -8,6 +8,6 @@ namespace Binance.objects.api_responses
 {
     public class Response_Klines : APIResponse
     {
-        public object[][] Klines { get; set; }
+        public object[][] klines { get; set; }
     }
 }

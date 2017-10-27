@@ -141,6 +141,26 @@ namespace Binance.CMD
 
                                 }
                                 break;
+                            case "agg_trades":
+                                if( SetValue<string>("Symbol",args,1,out symbol))
+                                {
+                                    Response_AggTrades aggtrades = await binance.AggTrades(symbol);
+                                    if (LogAPIIntro(aggtrades))
+                                    {
+
+                                    }
+                                }
+                                break;
+                            case "klines":
+                                if (SetValue<string>("Symbol", args, 1, out symbol))
+                                {
+                                    Response_Klines klines = await binance.Klines(symbol);
+                                    if (LogAPIIntro(klines))
+                                    {
+
+                                    }
+                                }
+                                break;
                             case "ticker_all":
                                 Response_AllPrices prices = await binance.Ticker_AllPrices();
                                 if (LogAPIIntro(prices))
@@ -151,6 +171,18 @@ namespace Binance.CMD
                                         LogToConsole(String.Format("| {0,8} | {1,16} |", quote.symbol, quote.price));
                                     }
                                     
+                                }
+                                break;
+                            case "ticker_all_book":
+                                Response_AllBookPrices bookprices = await binance.Ticker_AllBookTickers();
+                                if (LogAPIIntro(bookprices))
+                                {
+                                    LogToConsole(String.Format("| {0,8} | {1,16} | {1,16} |", "Symbol", "Bid", "Ask"));
+                                    foreach (var quote in bookprices.bookprices)
+                                    {
+                                        LogToConsole(String.Format("| {0,8} | {1,16} | {1,16} |", quote.symbol, quote.bidPrice, quote.askPrice));
+                                    }
+
                                 }
                                 break;
                             case "ticker_24hr":
@@ -300,8 +332,7 @@ namespace Binance.CMD
                                 }
                                 break;
                             case "open_orders":
-                                string oo_symbol;
-                                SetValue<string>("Symbol", args, 1, out oo_symbol);
+                                string oo_symbol=SetValue("Symbol", args[1]);
                                 Response_OpenOrders openorders = await binance.Open_Orders(oo_symbol);
                                 if (LogAPIIntro(openorders))
                                 {
@@ -423,9 +454,9 @@ namespace Binance.CMD
         public static void LogToConsole(string message = null)
         {
             if (string.IsNullOrEmpty(message))
-                LogToConsole();
+                Console.WriteLine();
             else
-                LogToConsole(message);
+                Console.WriteLine(message);
         }
     }
 

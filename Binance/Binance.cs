@@ -86,10 +86,15 @@ namespace Binance
         }
         private async Task<string> APIKEY_Request(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET)
         {
+            if (string.IsNullOrEmpty(this.APIKey))
+                throw new Exception("Null APIKey and/or APISecret encountered.  Cannot execute 'apikey' requests.");
             return await ExecuteRequest(url, parameters, verb, EndpointSecurityTypes.API_KEY);
         }
         private async Task<string> SIGNED_Request(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET, long? receiveWindow = null)
         {
+            if (string.IsNullOrEmpty(this.APIKey)
+                || string.IsNullOrEmpty(this.APISecret))
+                throw new Exception("Null APIKey and/or APISecret encountered.  Cannot execute 'signed' requests.");
             return await ExecuteRequest(url, parameters, verb, EndpointSecurityTypes.SIGNED, receiveWindow);
         }
 
@@ -247,7 +252,7 @@ namespace Binance
                                             "endTime", endTime,
                                             "limit", limit);
             string response = await PUBLIC_Request(url, paramList);
-            return APIResponseHandler.CreateAPIResponseObject<Response_AggTrades>(response);
+            return APIResponseHandler.CreateAPIResponseObject<Response_AggTrades>(response, "aggtrades");
         }
 
         /// <summary>
@@ -267,7 +272,7 @@ namespace Binance
                                             "endTime", endTime,
                                             "limit", limit);
             string response = await PUBLIC_Request(url, paramList);
-            return APIResponseHandler.CreateAPIResponseObject<Response_Klines>(response);
+            return APIResponseHandler.CreateAPIResponseObject<Response_Klines>(response, "klines");
         }
 
         /// <summary>
@@ -289,17 +294,17 @@ namespace Binance
         {
             string url = "v1/ticker/allPrices";
             string response = await PUBLIC_Request(url);
-            return APIResponseHandler.CreateAPIResponseObject<Response_AllPrices>(response);
+            return APIResponseHandler.CreateAPIResponseObject<Response_AllPrices>(response, "prices");
         }
 
         /// <summary>
         /// Best price/qty on the order book for all symbols.
         /// </summary>
-        public async Task<Response_AllPrices> Ticker_AllBookTickers()
+        public async Task<Response_AllBookPrices> Ticker_AllBookTickers()
         {
             string url = "v1/ticker/allBookTickers";
             string response = await PUBLIC_Request(url);
-            return APIResponseHandler.CreateAPIResponseObject<Response_AllPrices>(response);
+            return APIResponseHandler.CreateAPIResponseObject<Response_AllBookPrices>(response, "bookprices");
         }
 
         #endregion
