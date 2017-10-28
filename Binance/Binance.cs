@@ -41,12 +41,33 @@ namespace Binance
         public string APISecret { private get; set; }
 
         #endregion
- 
+
         #region Helper Functions
+        /// <summary>
+        /// If your API key / secret is stored in a json file, this function will import them.
+        /// That json file should be formated the following way:
+        /// { "key":"", "secret":"" }
+        /// </summary>
+        /// <param name="filename">Name of the json file containing key/secret values.</param>
+        public void ImportKeyFile(string filename)
+        {
+            if (File.Exists(filename))
+            {
+                string fileText = File.ReadAllText(filename);
+                Keys keys = APIResponseHandler.DeserializeKeyFile(fileText);
+                this.APIKey = keys.key;
+                this.APISecret = keys.secret;
+            }
+            else
+                throw new FileNotFoundException("Key file could not be found.");
+        }
 
         public static string FormatSymbol(string symbol)
         {
-            return symbol.ToUpper();
+            if (!string.IsNullOrEmpty(symbol))
+                return symbol.ToUpper();
+            else
+                return null;
         }
         public static string FormatSymbol(string baseAsset, string quoteAsset)
         {
@@ -99,6 +120,7 @@ namespace Binance
         }
 
         #region [FN] ExecuteRequest
+
         private async Task<string> ExecuteRequest(string endpointUrl, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET, EndpointSecurityTypes securityType = EndpointSecurityTypes.NONE, long? receiveWindow = null)
         {
             string response = null;
@@ -263,11 +285,11 @@ namespace Binance
         /// <param name="startTime">[Optional]</param>
         /// <param name="endTime">[Optional]</param>
         /// <param name="limit">[Optional] Default 500; max 500.</param>
-        public async Task<Response_Klines> Klines(string symbol, KlineIntervals intervals = KlineIntervals._30m, long? startTime = null, long? endTime = null, int? limit = null)
+        public async Task<Response_Klines> Klines(string symbol, KlineIntervals interval = KlineIntervals._30m, long? startTime = null, long? endTime = null, int? limit = null)
         {
             string url = "v1/klines";
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol),
-                                            "intervals", intervals,
+                                            "interval", interval.ToString().Substring(1),
                                             "startTime", startTime,
                                             "endTime", endTime,
                                             "limit", limit);

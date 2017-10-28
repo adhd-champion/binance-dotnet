@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 using Binance;
 using Binance.enums;
@@ -15,10 +16,15 @@ namespace Binance.CMD
     {
         private static Binance binance;
         private static bool ShellMode = false;
-        
+
         static void Main(string[] args)
         {
             binance = new Binance();
+            string dir = Directory.GetCurrentDirectory();
+            //@"C:\Users\Greg\Source\Repos\binance-dotnet\Binance.CMD\bin\Debug"
+            dir = dir.Substring(0, dir.IndexOf(@"\", dir.IndexOf("binance-dotnet") + 1) + 1);
+            string file = Path.Combine(dir, "keys.gp");
+            binance.ImportKeyFile(file);
             Start(args).Wait();
         }
         static async Task Start(string[] args)
@@ -144,7 +150,20 @@ namespace Binance.CMD
                             case "agg_trades":
                                 if( SetValue<string>("Symbol",args,1,out symbol))
                                 {
-                                    Response_AggTrades aggtrades = await binance.AggTrades(symbol);
+                                    Response_AggTrades aggtrades = null;
+                                    long? atFromID = null, atStartTime = null, atEndTime = null;
+                                    int? atLimit = null;
+                                    SetValue<long?>("FromID", args, 2, out atFromID);
+                                    if (!SetValue<int?>("Limit", args, 3, out atLimit))
+                                    {
+                                        SetValue<long?>("StartTime", args, 3, out atStartTime);
+                                        SetValue<long?>("EndTime", args, 4, out atEndTime);
+                                        aggtrades = await binance.AggTrades(symbol, atFromID, atStartTime, atEndTime);
+                                    }
+                                    else
+                                        aggtrades = await binance.AggTrades(symbol, atFromID, null, null, atLimit);
+
+
                                     if (LogAPIIntro(aggtrades))
                                     {
 
@@ -324,10 +343,10 @@ namespace Binance.CMD
                                 Response_AllOrders allorders = await binance.All_Orders(ao_symbol);
                                 if (LogAPIIntro(allorders))
                                 {
-                                    LogToConsole(String.Format("| {0,5} | {1,10} | {2,10} |", "Symbol", "Price", "Quantity"));
+                                    LogToConsole(String.Format("| {0,5} | {1,4} | {2,11} | {3,16} |", "Symbol", "Side", "Price", "Quantity"));
                                     foreach (var order in allorders.orders)
                                     {
-                                        LogToConsole(String.Format("| {0,5} | {1,10} | {2,10} |", order.symbol, order.price, order.executedQty));
+                                        LogToConsole(String.Format("| {0,5} | {1,4} | {2,11} | {3,16} |", order.symbol, order.side, order.price, order.executedQty));
                                     }
                                 }
                                 break;

@@ -33,5 +33,12 @@ namespace Binance.objects.api_responses
             ((APIResponse)obj).raw = json;
             return ((T)obj);
         }
+        public static Keys DeserializeKeyFile(string json)
+        {
+            JavaScriptSerializer java = new JavaScriptSerializer();
+            Keys obj;
+            obj = java.Deserialize<Keys>(json);
+            return obj;
+        }
     }
 }

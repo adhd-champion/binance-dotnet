@@ -68,6 +68,7 @@
     <Compile Include="objects\api_responses\Response_Ping.cs" />
     <Compile Include="objects\api_responses\Response_Ticker_24hr.cs" />
     <Compile Include="objects\APIResponse.cs" />
+    <Compile Include="objects\Keys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
