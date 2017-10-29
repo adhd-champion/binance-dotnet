@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Binance.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="enums\EndpointSecurityTypes.cs" />
     <Compile Include="enums\HTTPVerbs.cs" />
     <Compile Include="enums\InForceTimes.cs" />
