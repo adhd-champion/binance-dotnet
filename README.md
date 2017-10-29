@@ -3,12 +3,15 @@ Binance Dotnet is a C# .Net class library to assist in utilizing the Binance Web
 It currently only implements calls to the public API endpoints of the initial release.  It does not, as of yet, include wrappers for the following:
 * Withdraw API
 * Websockets API
+
 These will be added as I have time to add them.
 For more documentation on the Binance API, visit https://www.binance.com/restapipub.html
 
-### Using binance-dotnet
-To use the binance-dotnet library, add the binance-dotnet project to your solution.  Then add the namespace as a reference in the desired project.  
-To reference the full library, use the following 'using' statements.
+## Using binance-dotnet
+To use the binance-dotnet library, add the binance-dotnet project to your solution and add it as a reference into the desired project.
+
+### Using directives  
+To reference the full binance_dotnet library in your class, use the following directives.
 ```csharp
 using binance_dotnet;
 using binance_dotnet.enums;
