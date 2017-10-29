@@ -25,15 +25,5 @@ namespace binance_dotnet.objects
                     return true;
             }
         }
-        public string status
-        {
-            get
-            {
-                if (!hasErrors)
-                    return "Succeeded";
-                else
-                    return "Failed";
-            }
-        }
     }
 }

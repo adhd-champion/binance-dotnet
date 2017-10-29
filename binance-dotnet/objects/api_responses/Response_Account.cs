@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace binance_dotnet.objects.api_responses
+namespace binance_dotnet.objects
 {
     public class Response_Account : APIResponse
     {
@@ -16,14 +16,14 @@ namespace binance_dotnet.objects.api_responses
         public bool canWithdraw { get; set; }
         public bool canDeposit { get; set; }
         public Balance[] balances { get; set; }
-        public class Balance
-        {
-            public string asset { get; set; }
-            public string free { get; set; }
-            public string locked { get; set; }
-        }
+    }
+    public class Balance
+    {
+        public string asset { get; set; }
+        public string free { get; set; }
+        public string locked { get; set; }
     }
 
-    
+
 
 }

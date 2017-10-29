@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using System.Web.Script.Serialization;
 
-namespace binance_dotnet.objects.api_responses
+namespace binance_dotnet.objects
 {
     public static class APIResponseHandler
     {
