@@ -71,6 +71,7 @@
     <Compile Include="objects\api_responses\Response_QueryOrder.cs" />
     <Compile Include="objects\api_responses\Response_Ticker_24hr.cs" />
     <Compile Include="objects\api_responses\Response_Time.cs" />
+    <Compile Include="objects\api_responses\Response_UserDataStream.cs" />
     <Compile Include="objects\api_responses\Response_Withdraw.cs" />
     <Compile Include="objects\api_responses\Response_WithdrawHistory.cs" />
     <Compile Include="objects\Keys.cs" />

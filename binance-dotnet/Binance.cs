@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 using binance_dotnet.enums;
 using binance_dotnet.objects;
@@ -10,11 +11,14 @@ using System.Security.Cryptography;
 using System.Web;
 using System.Net;
 using System.IO;
+using System.Net.WebSockets;
+using System.Timers;
 
 namespace binance_dotnet
 {
     public class Binance
     {
+        
         public Binance(string apiKey = null, string secretKey = null)
         {
             ReceiveWindow = DEFAULT_RecieveWindow;
@@ -22,11 +26,14 @@ namespace binance_dotnet
             TimeStampSource = DEFAULT_TimeStampSources;
             APIKey = apiKey;
             APISecret = secretKey;
+
+            
         }
 
         #region Default Values
-        private const string APIBaseURL = "https://www.binance.com/api/";
-        private const string WAPIBaseURL = "https://www.binance.com/wapi/";
+        private const string APIBaseURL = @"https://www.binance.com/api/";
+        private const string WAPIBaseURL = @"https://www.binance.com/wapi/";
+        private const string WebSocketBaseURL = @"wss://stream.binance.com:9443/ws/";
         private const long DEFAULT_RecieveWindow = 6000000;
         private const bool DEFAULT_UseReceiveWindow = true;
         private const TimeStampSources DEFAULT_TimeStampSources = TimeStampSources.APIServer;
@@ -34,11 +41,11 @@ namespace binance_dotnet
 
         #region Properties
 
-        internal TimeStampSources TimeStampSource { get; set; }
-        internal long ReceiveWindow { get; set; }
-        internal bool UseReceiveWindow { get; set; }
-        internal string APIKey { private get; set; }
-        internal string APISecret { private get; set; }
+        public TimeStampSources TimeStampSource { get; set; }
+        public long ReceiveWindow { get; set; }
+        public bool UseReceiveWindow { get; set; }
+        public string APIKey { private get; set; }
+        public string APISecret { private get; set; }
         #endregion
 
         #region Helper Functions
@@ -724,6 +731,5 @@ namespace binance_dotnet
         #endregion
 
         #endregion
-
     }
 }

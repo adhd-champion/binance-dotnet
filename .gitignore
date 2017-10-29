@@ -289,3 +289,4 @@ __pycache__/
 
 Binance.CMD/
 *.gp
+/binance-dotnet/objects/api_responses/Response_UserDataStream.cs
