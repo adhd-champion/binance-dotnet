@@ -170,7 +170,7 @@ public async void PrintOpenOrders()
 
     Console.WriteLine(String.Format("| {0,-7} | {1,-5} | {2,-10} | {3,-12} | {4,-12} |", "OrderID", "Asser", "Price", "Orig Qty", "Exec Qty"));
     foreach (var order in result.orders)
-        Console.WriteLine(String.Format("| {0,-7} | {1,-5} | {2,-10} | {3,-12} | {4,-12} |", order.orderId, order.symbol, order.price, order.origQty, order.executedQty));
+        Console.WriteLine(String.Format("| {0,7} | {1,5} | {2,10} | {3,12} | {4,12} |", order.orderId, order.symbol, order.price, order.origQty, order.executedQty));
 }
 ```
 
@@ -180,7 +180,7 @@ public async void PrintCurrentPositions()
 {
     var result = await Binance.Account();
 
-    Console.WriteLine(String.Format("| {0,5} | {1,16} | {2,16} |", "Asset", "Free", "Locked"));
+    Console.WriteLine(String.Format("| {0,-5} | {1,-16} | {2,-16} |", "Asset", "Free", "Locked"));
     foreach(var balance in result.balances)
         Console.WriteLine(String.Format("| {0,5} | {1,16} | {2,16} |", balance.asset, balance.free, balance.locked));
 }
