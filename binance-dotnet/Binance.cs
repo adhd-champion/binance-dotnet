@@ -26,6 +26,7 @@ namespace binance_dotnet
 
         #region Default Values
         private const string APIBaseURL = "https://www.binance.com/api/";
+        private const string WAPIBaseURL = "https://www.binance.com/wapi/";
         private const long DEFAULT_RecieveWindow = 6000000;
         private const bool DEFAULT_UseReceiveWindow = true;
         private const TimeStampSources DEFAULT_TimeStampSources = TimeStampSources.APIServer;
@@ -33,15 +34,15 @@ namespace binance_dotnet
 
         #region Properties
 
-        public TimeStampSources TimeStampSource { get; set; }
-        public long ReceiveWindow { get; set; }
-        public bool UseReceiveWindow { get; set; }
-        public string APIKey { private get; set; }
-        public string APISecret { private get; set; }
-
+        internal TimeStampSources TimeStampSource { get; set; }
+        internal long ReceiveWindow { get; set; }
+        internal bool UseReceiveWindow { get; set; }
+        internal string APIKey { private get; set; }
+        internal string APISecret { private get; set; }
         #endregion
 
         #region Helper Functions
+
         /// <summary>
         /// If your API key / secret is stored in a json file, this function will import them.
         /// That json file should be formated the following way:
@@ -61,14 +62,14 @@ namespace binance_dotnet
                 throw new FileNotFoundException("Key file could not be found.");
         }
 
-        public static string FormatSymbol(string symbol)
+        private static string FormatSymbol(string symbol)
         {
             if (!string.IsNullOrEmpty(symbol))
                 return symbol.ToUpper();
             else
                 return null;
         }
-        public static string FormatSymbol(string baseAsset, string quoteAsset)
+        private static string FormatSymbol(string baseAsset, string quoteAsset)
         {
             return baseAsset.ToUpper() + quoteAsset.ToUpper();
         }
@@ -100,6 +101,38 @@ namespace binance_dotnet
 
         #region API Requests
 
+        #region Requests
+
+        #region API
+        private async Task<string> PUBLIC_Request_API(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET)
+        {
+            return await PUBLIC_Request(APIBaseURL + url, parameters, verb);
+        }
+        private async Task<string> APIKEY_Request_API(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET)
+        {
+            return await APIKEY_Request(APIBaseURL + url, parameters, verb);
+        }
+        private async Task<string> SIGNED_Request_API(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET, long? receiveWindow = null)
+        {
+            return await SIGNED_Request(APIBaseURL + url, parameters, verb, receiveWindow);
+        }
+        #endregion
+
+        #region WAPI
+        private async Task<string> PUBLIC_Request_WAPI(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET)
+        {
+            return await PUBLIC_Request(WAPIBaseURL + url, parameters, verb);
+        }
+        private async Task<string> APIKEY_Requestt_WAPI(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET)
+        {
+            return await APIKEY_Request(WAPIBaseURL + url, parameters, verb);
+        }
+        private async Task<string> SIGNED_Requestt_WAPI(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.POST, long? receiveWindow = null)
+        {
+            return await SIGNED_Request(WAPIBaseURL + url, parameters, verb, receiveWindow);
+        }
+        #endregion
+
         private async Task<string> PUBLIC_Request(string url, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET)
         {
             return await ExecuteRequest(url, parameters, verb, EndpointSecurityTypes.NONE);
@@ -118,6 +151,8 @@ namespace binance_dotnet
             return await ExecuteRequest(url, parameters, verb, EndpointSecurityTypes.SIGNED, receiveWindow);
         }
 
+        #endregion
+
         #region [FN] ExecuteRequest
 
         private async Task<string> ExecuteRequest(string endpointUrl, Dictionary<string, object> parameters = null, HTTPVerbs verb = HTTPVerbs.GET, EndpointSecurityTypes securityType = EndpointSecurityTypes.NONE, long? receiveWindow = null)
@@ -130,7 +165,7 @@ namespace binance_dotnet
             try
             {
                 // Create URI
-                var builder = new UriBuilder(APIBaseURL + endpointUrl);
+                var builder = new UriBuilder(endpointUrl);
 
                 // Parse parameters
                 var qs = HttpUtility.ParseQueryString(string.Empty);
@@ -212,7 +247,9 @@ namespace binance_dotnet
 
         #endregion
 
-        #region API Endpoints
+        #region Endpoints
+
+        #region API
 
         #region ...General
 
@@ -222,7 +259,7 @@ namespace binance_dotnet
         public async Task<Response_Ping> Ping()
         {
             string url = "v1/ping";
-            string response = await PUBLIC_Request(url);
+            string response = await PUBLIC_Request_API(url);
             return APIResponseHandler.CreateAPIResponseObject<Response_Ping>(response);
         }
 
@@ -232,7 +269,7 @@ namespace binance_dotnet
         public async Task<Response_Time> Time()
         {
             string url = "v1/time";
-            string response = await PUBLIC_Request(url);
+            string response = await PUBLIC_Request_API(url);
             return APIResponseHandler.CreateAPIResponseObject<Response_Time>(response);
         }
 
@@ -250,7 +287,7 @@ namespace binance_dotnet
             string url = "v1/depth";
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol),
                                             "limit", limit);
-            string response = await PUBLIC_Request(url, paramList);
+            string response = await PUBLIC_Request_API(url, paramList);
             return APIResponseHandler.CreateAPIResponseObject<Response_Depth>(response);
         }
 
@@ -272,7 +309,7 @@ namespace binance_dotnet
                                             "startTime", startTime,
                                             "endTime", endTime,
                                             "limit", limit);
-            string response = await PUBLIC_Request(url, paramList);
+            string response = await PUBLIC_Request_API(url, paramList);
             return APIResponseHandler.CreateAPIResponseObject<Response_AggTrades>(response, "aggtrades");
         }
 
@@ -292,7 +329,7 @@ namespace binance_dotnet
                                             "startTime", startTime,
                                             "endTime", endTime,
                                             "limit", limit);
-            string response = await PUBLIC_Request(url, paramList);
+            string response = await PUBLIC_Request_API(url, paramList);
             return APIResponseHandler.CreateAPIResponseObject<Response_Klines>(response, "klines");
         }
 
@@ -304,7 +341,7 @@ namespace binance_dotnet
         {
             string url = "v1/ticker/24hr";
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol));
-            string response = await PUBLIC_Request(url, paramList);
+            string response = await PUBLIC_Request_API(url, paramList);
             return APIResponseHandler.CreateAPIResponseObject<Response_Ticker_24hr>(response);
         }
 
@@ -314,7 +351,7 @@ namespace binance_dotnet
         public async Task<Response_AllPrices> Ticker_AllPrices()
         {
             string url = "v1/ticker/allPrices";
-            string response = await PUBLIC_Request(url);
+            string response = await PUBLIC_Request_API(url);
             return APIResponseHandler.CreateAPIResponseObject<Response_AllPrices>(response, "prices");
         }
 
@@ -324,7 +361,7 @@ namespace binance_dotnet
         public async Task<Response_AllBookPrices> Ticker_AllBookTickers()
         {
             string url = "v1/ticker/allBookTickers";
-            string response = await PUBLIC_Request(url);
+            string response = await PUBLIC_Request_API(url);
             return APIResponseHandler.CreateAPIResponseObject<Response_AllBookPrices>(response, "bookprices");
         }
 
@@ -358,7 +395,7 @@ namespace binance_dotnet
                                             "newClientOrderId", newClientOrderId,
                                             "stopPrice", stopPrice ?? null,
                                             "icebergQty", icebergQty ?? null);
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.POST);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.POST);
             return APIResponseHandler.CreateAPIResponseObject<Response_NewOrder>(response);
         }
 
@@ -436,7 +473,7 @@ namespace binance_dotnet
                                             "newClientOrderId", newClientOrderId,
                                             "stopPrice", stopPrice ?? null,
                                             "icebergQty", icebergQty ?? null);
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.POST);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.POST);
             return APIResponseHandler.CreateAPIResponseObject<Response_NewOrder>(response);
         }
 
@@ -503,7 +540,7 @@ namespace binance_dotnet
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol),
                                             "orderId", orderId ?? null,
                                             "origClientOrderId", origClientOrderId);
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.GET);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.GET);
             return APIResponseHandler.CreateAPIResponseObject<Response_QueryOrder>(response);
         }
         /// <summary>
@@ -545,7 +582,7 @@ namespace binance_dotnet
                                             "orderId", orderId ?? null,
                                             "origClientOrderId", origClientOrderId,
                                             "newClientOrderId", newClientOrderId);
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.DELETE);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.DELETE);
             return APIResponseHandler.CreateAPIResponseObject<Response_CancelOrder>(response);
         }
 
@@ -585,7 +622,7 @@ namespace binance_dotnet
         {
             string url = "v3/openOrders";
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol));
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.GET);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.GET);
             return APIResponseHandler.CreateAPIResponseObject<Response_OpenOrders>(response, "orders");
         }
 
@@ -600,7 +637,7 @@ namespace binance_dotnet
         {
             string url = "v3/allOrders";
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol));
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.GET);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.GET);
             return APIResponseHandler.CreateAPIResponseObject<Response_AllOrders>(response, "orders");
         }
 
@@ -612,7 +649,7 @@ namespace binance_dotnet
         public async Task<Response_Account> Account()
         {
             string url = "v3/account";
-            string response = await SIGNED_Request(url);
+            string response = await SIGNED_Request_API(url);
             return APIResponseHandler.CreateAPIResponseObject<Response_Account>(response);
         }
 
@@ -628,8 +665,60 @@ namespace binance_dotnet
             var paramList = CreateParamDict("symbol", FormatSymbol(symbol),
                                             "limit", limit ?? null,
                                             "fromId", fromId ?? null);
-            string response = await SIGNED_Request(url, paramList, HTTPVerbs.GET);
+            string response = await SIGNED_Request_API(url, paramList, HTTPVerbs.GET);
             return APIResponseHandler.CreateAPIResponseObject<Response_MyTrades>(response, "trades");
+        }
+
+        #endregion
+
+        #endregion
+
+        #region WAPI
+
+        public async Task<Response_Withdraw> Withdraw(string asset, string address, double amount, string name=null, long? recvWindow = null)
+        {
+            string url = "v1/withdraw.html";
+            var paramList = CreateParamDict("asset", FormatSymbol(asset),
+                                            "address", address,
+                                            "amount", amount,
+                                            "name", name,
+                                            "recvWindow", recvWindow ?? null);
+            string response = await SIGNED_Requestt_WAPI(url, paramList, HTTPVerbs.POST);
+            return APIResponseHandler.CreateAPIResponseObject<Response_Withdraw>(response);
+        }
+
+        public async Task<Response_DepositHistory> GetDepositHistory(string asset = null, DepositHistoryStatuses? status = null, long? startTime = null, long? endTime = null, long? recvWindow = null)
+        {
+            string url = "v1/getDepositHistory.html";
+
+            int? statusCode = null;
+            if (status.HasValue)
+                statusCode = (int)status.Value;
+
+            var paramList = CreateParamDict("asset", FormatSymbol(asset),
+                                            "status", statusCode ?? null,
+                                            "startTime", startTime ?? null,
+                                            "name", endTime ?? null,
+                                            "recvWindow", recvWindow ?? null);
+            string response = await SIGNED_Requestt_WAPI(url, paramList, HTTPVerbs.POST);
+            return APIResponseHandler.CreateAPIResponseObject<Response_DepositHistory>(response, "depositList");
+        }
+
+        public async Task<Response_WithdrawHistory> GetWithdrawHistory(string asset = null, WithdrawHistoryStatuses? status = null, long? startTime = null, long? endTime = null, long? recvWindow = null)
+        {
+            string url = "v1/getWithdrawHistory.html";
+
+            int? statusCode = null;
+            if (status.HasValue)
+                statusCode = (int)status.Value;
+
+            var paramList = CreateParamDict("asset", FormatSymbol(asset),
+                                            "status", statusCode ?? null,
+                                            "startTime", startTime ?? null,
+                                            "name", endTime ?? null,
+                                            "recvWindow", recvWindow ?? null);
+            string response = await SIGNED_Requestt_WAPI(url, paramList, HTTPVerbs.POST);
+            return APIResponseHandler.CreateAPIResponseObject<Response_WithdrawHistory>(response);
         }
 
         #endregion

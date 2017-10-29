@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Binance.cs" />
+    <Compile Include="enums\DepositHistoryStatuses.cs" />
     <Compile Include="enums\EndpointSecurityTypes.cs" />
     <Compile Include="enums\HTTPVerbs.cs" />
     <Compile Include="enums\InForceTimes.cs" />
@@ -51,8 +52,10 @@
     <Compile Include="enums\OrderStatuses.cs" />
     <Compile Include="enums\OrderTypes.cs" />
     <Compile Include="enums\TimeStampSources.cs" />
+    <Compile Include="enums\WithdrawHistoryStatuses.cs" />
     <Compile Include="objects\APIResponse.cs" />
     <Compile Include="objects\APIResponseHandler.cs" />
+    <Compile Include="objects\api_responses\Response_DepositHistory.cs" />
     <Compile Include="objects\api_responses\Response_Account.cs" />
     <Compile Include="objects\api_responses\Response_AggTrades.cs" />
     <Compile Include="objects\api_responses\Response_AllBookPrices.cs" />
@@ -68,6 +71,8 @@
     <Compile Include="objects\api_responses\Response_QueryOrder.cs" />
     <Compile Include="objects\api_responses\Response_Ticker_24hr.cs" />
     <Compile Include="objects\api_responses\Response_Time.cs" />
+    <Compile Include="objects\api_responses\Response_Withdraw.cs" />
+    <Compile Include="objects\api_responses\Response_WithdrawHistory.cs" />
     <Compile Include="objects\Keys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
