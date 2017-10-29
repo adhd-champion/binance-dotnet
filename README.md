@@ -3,12 +3,15 @@ Binance Dotnet is a C# .Net class library to assist in utilizing the Binance Web
 It currently only implements calls to the public API endpoints of the initial release.  It does not, as of yet, include wrappers for the following:
 * Withdraw API
 * Websockets API
+
 These will be added as I have time to add them.
 For more documentation on the Binance API, visit https://www.binance.com/restapipub.html
 
-### Using binance-dotnet
-To use the binance-dotnet library, add the binance-dotnet project to your solution.  Then add the namespace as a reference in the desired project.  
-To reference the full library, use the following 'using' statements.
+## Using binance-dotnet
+To use the binance-dotnet library, add the binance-dotnet project to your solution and add it as a reference into the desired project.
+
+### Using directives  
+To reference the full binance_dotnet library in your class, use the following directives.
 ```csharp
 using binance_dotnet;
 using binance_dotnet.enums;
@@ -167,7 +170,7 @@ public async void PrintOpenOrders()
 
     Console.WriteLine(String.Format("| {0,-7} | {1,-5} | {2,-10} | {3,-12} | {4,-12} |", "OrderID", "Asser", "Price", "Orig Qty", "Exec Qty"));
     foreach (var order in result.orders)
-        Console.WriteLine(String.Format("| {0,-7} | {1,-5} | {2,-10} | {3,-12} | {4,-12} |", order.orderId, order.symbol, order.price, order.origQty, order.executedQty));
+        Console.WriteLine(String.Format("| {0,7} | {1,5} | {2,10} | {3,12} | {4,12} |", order.orderId, order.symbol, order.price, order.origQty, order.executedQty));
 }
 ```
 
@@ -177,7 +180,7 @@ public async void PrintCurrentPositions()
 {
     var result = await Binance.Account();
 
-    Console.WriteLine(String.Format("| {0,5} | {1,16} | {2,16} |", "Asset", "Free", "Locked"));
+    Console.WriteLine(String.Format("| {0,-5} | {1,-16} | {2,-16} |", "Asset", "Free", "Locked"));
     foreach(var balance in result.balances)
         Console.WriteLine(String.Format("| {0,5} | {1,16} | {2,16} |", balance.asset, balance.free, balance.locked));
 }
