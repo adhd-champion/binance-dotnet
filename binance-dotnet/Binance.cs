@@ -910,7 +910,7 @@ namespace binance_dotnet
                 {
                     UDS_ListenKey = result.listenKey;
                     UDS_Connected = true;
-                    WebSocket_ReportUpdate(result.msg);
+                    WebSocket_ReportUpdate(result.msg, WebSocketUpdateTypes.ConnectionStatus);
                     uds_keepalive.Enabled = true; // <-- Starts the Keep Alive timer on seperate thread...
                 }
                 else
@@ -926,11 +926,11 @@ namespace binance_dotnet
             APIResponse result = APIResponseHandler.CreateAPIResponseObject<Response_UserDataStream>(response);
             if (result.hasErrors)
             {
-                WebSocket_ReportUpdate("!ERROR! " + result.code + " - " + result.msg);
+                WebSocket_ReportUpdate("!ERROR! " + result.code + " - " + result.msg, WebSocketUpdateTypes.ConnectionStatusError);
                 UserDataStream_Close();
             }
             else
-                WebSocket_ReportUpdate("Keep alive.");
+                WebSocket_ReportUpdate("Keep alive.", WebSocketUpdateTypes.ConnectionStatus);
         }
         private async void UserDataStream_Close()
         {
@@ -944,10 +944,10 @@ namespace binance_dotnet
                 UDS_Connected = false;
                 uds_keepalive.Enabled = false; // <-- Stops the Keep Alive timer on seperate thread...
 
-                WebSocket_ReportUpdate("User data stream terminated.");
+                WebSocket_ReportUpdate("User data stream terminated.", WebSocketUpdateTypes.ConnectionStatus);
             }
             else
-                WebSocket_ReportUpdate("!ERROR! " + result.code + " - " + result.msg);
+                WebSocket_ReportUpdate("!ERROR! " + result.code + " - " + result.msg, WebSocketUpdateTypes.ConnectionStatusError);
 
         }
 
@@ -980,13 +980,13 @@ namespace binance_dotnet
                 }
                 catch (Exception ex)
                 {
-                    WebSocket_ReportUpdate("!ERROR!  " + ex.ToString());
+                    WebSocket_ReportUpdate("!ERROR!  " + ex.ToString(), WebSocketUpdateTypes.EndpointStatusError);
                 }
                 finally
                 {
                     if (ws != null)
                         ws.Dispose();
-                    WebSocket_ReportUpdate("Websocket Endpoint connection closed.");
+                    WebSocket_ReportUpdate("Websocket Endpoint connection closed.", WebSocketUpdateTypes.EndpointStatus);
                 }
             }
         }
@@ -1001,13 +1001,13 @@ namespace binance_dotnet
                 else
                 {
                     UTF8Encoding encoder = new UTF8Encoding();
-                    WebSocket_ReportUpdate(encoder.GetString(chunkBytes));
+                    WebSocket_ReportUpdate(encoder.GetString(chunkBytes), WebSocketUpdateTypes.EndpointDataReceived);
                 } 
             }
         }
-        private void WebSocket_ReportUpdate(string message)
+        private void WebSocket_ReportUpdate(string message,WebSocketUpdateTypes type)
         {
-            WebSocketUpdateReceivedEventArgs eventArgs = new WebSocketUpdateReceivedEventArgs(message, UDS_Connected);
+            WebSocketUpdateReceivedEventArgs eventArgs = new WebSocketUpdateReceivedEventArgs(message, UDS_Connected, type);
             OnWebSocketStatusUpdate(eventArgs);
         }
         protected virtual void OnWebSocketStatusUpdate(WebSocketUpdateReceivedEventArgs e)
