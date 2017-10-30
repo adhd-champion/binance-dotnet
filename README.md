@@ -3,10 +3,10 @@ Binance Dotnet is a C# .Net class library to assist in utilizing the Binance Web
 It currently implements the following Binance API features:
 - [x] Original API
 - [x] Withdraw API
-- [ ] User Stream API
-- [ ] Websockets API
+- [x] User Stream API
+- [x] Websockets API
 
-The unchecked items will be included as I have time to add them.
+This project is now complete!
 For more documentation on the Binance API, visit https://www.binance.com/restapipub.html
 
 
@@ -55,7 +55,7 @@ public async Task<string> CheckServerTime()
         return result.serverTime.ToString();
 }
 
-## Examples
+## API Endpoint Examples
 
 ### Getting latest price of a symbol
 ```csharp
@@ -187,5 +187,32 @@ public async void PrintCurrentPositions()
     Console.WriteLine(String.Format("| {0,-5} | {1,-16} | {2,-16} |", "Asset", "Free", "Locked"));
     foreach(var balance in result.balances)
         Console.WriteLine(String.Format("| {0,5} | {1,16} | {2,16} |", balance.asset, balance.free, balance.locked));
+}
+```
+
+## Websocket Endpoint Examples
+To use the websockets implementation, you will need to utilize the 'WebSocketUpdateReceived' event as shown below:
+```csharp
+static void Main()
+{
+    Binance.WebSocketUpdateReceived += WebSocketsUpdateReceived;
+}
+private void WebSocketsUpdateReceived(Object sender, WebSocketUpdateReceivedEventArgs e)
+{
+    if(e.UpdateType == WebSocketUpdateTypes.EndpointDataReceived)
+    {
+        string message = string.Format("{0,-16} {1,-20} | {3,-30}", "[WebSocketUpdate]", e.Timestamp.ToString(), e.Message);
+        Console.WriteLine(message);
+    }
+}
+```
+
+### Getting order book via websockets
+### Getting the order book for a symbol
+```csharp
+public async void PrintOrderBook_WebSocket()
+{
+    string symbol="ltcbtc";
+    Binance.WS_Depth(symbol);
 }
 ```
