@@ -206,9 +206,15 @@ private void WebSocketsUpdateReceived(Object sender, WebSocketUpdateReceivedEven
     }
 }
 ```
+In order to any open websocket connections, use the 'CloseWebSockets' method:
+```csharp
+public void CloseWebSockets()
+{
+    Binance.CloseWebSockets();
+}
+```
 
 ### Getting order book via websockets
-### Getting the order book for a symbol
 ```csharp
 public async void PrintOrderBook_WebSocket()
 {
