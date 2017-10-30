@@ -75,6 +75,7 @@
     <Compile Include="objects\api_responses\Response_Withdraw.cs" />
     <Compile Include="objects\api_responses\Response_WithdrawHistory.cs" />
     <Compile Include="objects\Keys.cs" />
+    <Compile Include="objects\WebSocketUpdateReceivedEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

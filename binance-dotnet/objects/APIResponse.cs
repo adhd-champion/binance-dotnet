@@ -19,7 +19,27 @@ namespace binance_dotnet.objects
         {
             get
             {
-                if (code == null && string.IsNullOrEmpty(msg))
+                if (code == null)
+                    return false;
+                else
+                    return true;
+            }
+        }
+        public bool hasMessage
+        {
+            get
+            {
+                if (msg == null)
+                    return false;
+                else
+                    return true;
+            }
+        }
+        public bool hasCode
+        {
+            get
+            {
+                if (code == null)
                     return false;
                 else
                     return true;
