@@ -996,16 +996,21 @@ namespace binance_dotnet
             while (ws.State == WebSocketState.Open)
             {
                 var result = await ws.ReceiveAsync(new ArraySegment<byte>(chunkBytes), CancellationToken.None);
-                if (result.MessageType == WebSocketMessageType.Close)
-                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                if (!UDS_Connected)
+                    ws.Abort();
                 else
                 {
-                    UTF8Encoding encoder = new UTF8Encoding();
-                    WebSocket_ReportUpdate(encoder.GetString(chunkBytes), WebSocketUpdateTypes.EndpointDataReceived);
-                } 
+                    if (result.MessageType == WebSocketMessageType.Close)
+                        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    else
+                    {
+                        UTF8Encoding encoder = new UTF8Encoding();
+                        WebSocket_ReportUpdate(encoder.GetString(chunkBytes), WebSocketUpdateTypes.EndpointDataReceived);
+                    }
+                }
             }
         }
-        private void WebSocket_ReportUpdate(string message,WebSocketUpdateTypes type)
+        private void WebSocket_ReportUpdate(string message, WebSocketUpdateTypes type)
         {
             WebSocketUpdateReceivedEventArgs eventArgs = new WebSocketUpdateReceivedEventArgs(message, UDS_Connected, type);
             OnWebSocketStatusUpdate(eventArgs);
