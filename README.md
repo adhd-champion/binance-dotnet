@@ -206,7 +206,14 @@ private void WebSocketsUpdateReceived(Object sender, WebSocketUpdateReceivedEven
     }
 }
 ```
-In order to any open websocket connections, use the 'CloseWebSockets' method:
+When you execute a websocket method (any method prefaced with 'WS_'), it will automatically start a stream for you if one isn't already open.  If you prefer, you can open a websocket stream manually using the 'OpenWebSockets' method:
+```csharp
+public void OpenWebSockets()
+{
+    Binance.OpenWebSockets();
+}
+```
+In order to any close websocket connections, use the 'CloseWebSockets' method:
 ```csharp
 public void CloseWebSockets()
 {
