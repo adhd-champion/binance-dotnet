@@ -29,7 +29,7 @@ namespace binance_dotnet
             // Web Socket Variables
             UDS_KeepAliveInterval = DEFAULT_UDS_KeepAliveInterval;
             UDS_ResetInterval = DEFAULT_UDS_ResetInterval;
-            ActiveSockets = new Dictionary<string, bool>();
+            ActiveSockets = new Dictionary<string, BinanceWebSocketEndpoint>();
         }
 
         #region Default Values
@@ -900,9 +900,11 @@ namespace binance_dotnet
         private bool UDS_Connected = false;
         private System.Timers.Timer uds_keepalive = null;
         private System.Timers.Timer uds_reset = null;
-        private Dictionary<string, bool> ActiveSockets;
+        private bool ResetInProgress = false;
+        private Dictionary<string, BinanceWebSocketEndpoint> ActiveSockets;
         private DateTime WebSocket_Start;
         private DateTime WebSocket_Reset;
+       
 
         #endregion
 
@@ -919,7 +921,7 @@ namespace binance_dotnet
 
         #region Private Connection Handling
 
-        private async Task<bool> UserStream_Start(bool reset = false)
+        private async Task<bool> UserStream_Start()
         {
             if (!UDS_Connected)
             {
@@ -933,40 +935,35 @@ namespace binance_dotnet
                 uds_reset.Elapsed += new ElapsedEventHandler(UserStream_Reset);
                 uds_reset.Interval = UDS_ResetInterval;
 
+                WebSocket_Start = DateTime.Now;
+
                 #endregion
 
-                await UserStream_Open(reset);
+                await UserStream_Open();
+
+                WebSocket_ReportUpdate("User data stream STARTED.", WebSocketUpdateTypes.ConnectionStatus);
             }
             return UDS_Connected;
         }
-        private async Task UserStream_Open(bool reset = false)
+        private async Task UserStream_Open()
         {
             string url = "v1/userDataStream";
             string response = await APIKEY_Request_API(url, null, HTTPVerbs.POST);
             Response_UserDataStream result = APIResponseHandler.CreateAPIResponseObject<Response_UserDataStream>(response);
             if (!result.hasErrors)
             {
-                if(reset)
-                    WebSocket_Reset = DateTime.Now;
-                else
-                    WebSocket_Start = DateTime.Now;
+               
                 UDS_ListenKey = result.listenKey;
                 UDS_Connected = true;
-                WebSocket_ReportUpdate(result.msg, WebSocketUpdateTypes.ConnectionStatus);
+                //if(!reset)
+                //    WebSocket_ReportUpdate("User data stream STARTED.", WebSocketUpdateTypes.ConnectionStatus);
                 uds_keepalive.Enabled = true;//<--Starts the Keep Alive timer on seperate thread...
                 uds_reset.Enabled = true;//<------Starts the Reset timer on seperate thread...
             }
             else
                 UserStream_Stop();
         }
-        private async Task<APIResponse> UserStream_Close()
-        {
-            string url = "v1/userDataStream";
-            var paramList = CreateParamDict("listenKey", UDS_ListenKey);
-            string response = await APIKEY_Request_API(url, paramList, HTTPVerbs.DELETE);
-            APIResponse result = APIResponseHandler.CreateAPIResponseObject<Response_UserDataStream>(response);
-            return result;
-        }
+        
         private async void UserStream_KeepAlive(object source, ElapsedEventArgs e)
         {
             string url = "v1/userDataStream";
@@ -983,36 +980,53 @@ namespace binance_dotnet
         }
         private async void UserStream_Reset(object source, ElapsedEventArgs e)
         {
-            WebSocket_ReportUpdate("Max session length reached.  Resetting listen key.", WebSocketUpdateTypes.ConnectionStatus);
-            await UserStream_Close();
-            await UserStream_Open(true);
+            WebSocket_ReportUpdate("Max session length reached.  Resetting listen key....", WebSocketUpdateTypes.ConnectionStatus);
+            ResetInProgress = true;
+            uds_keepalive.Enabled = false;//<-------------Temporarily disable keep alive timer until new connection is established.
+            bool wsud_exists = false;
+            if (ActiveSockets.ContainsKey(WebSocketBaseURL+this.UDS_ListenKey))
+                wsud_exists = Close_WS_UserData(); //<----Closes user data web socket if open since it uses the current listen key.
+            
+            await UserStream_Close();//<------------------Closes user data stream
+            await UserStream_Open();//<-------------------Opens new user data stream
+            WebSocket_Reset = DateTime.Now;
+
+            uds_keepalive.Enabled = true;//<--------------Re-enable keep-alive timer
+            if (wsud_exists)
+                WS_UserData();//<-------------------------Re-opens using new listen key if it was running previously.
+            else
+                ResetInProgress = false;
+            
+            WebSocket_ReportUpdate("New listen key received. (" + this.UDS_ListenKey + ")" , WebSocketUpdateTypes.ConnectionStatus);
+        }
+        private async Task<APIResponse> UserStream_Close()
+        {
+            string url = "v1/userDataStream";
+            var paramList = CreateParamDict("listenKey", UDS_ListenKey);
+            string response = await APIKEY_Request_API(url, paramList, HTTPVerbs.DELETE);
+            APIResponse result = APIResponseHandler.CreateAPIResponseObject<Response_UserDataStream>(response);
+            return result;
         }
         private async void UserStream_Stop()
         {
-            // Abort all open sockets.
-            var activeKeys = ActiveSockets.Keys.ToArray();
-            foreach (string key in activeKeys)
-            {
-                ActiveSockets[key] = true; //<-----------------Signal socket to abort.
-            }
-            APIResponse result = await UserStream_Close();//<--Signal API to close User Stream.
-            if (!result.hasErrors)
-            {
-                uds_keepalive.Enabled = false;//<--------------Stops the Keep Alive timer on seperate thread...
-                uds_reset.Enabled = false;//<------------------Stops the Reset timer on seperate thread...
-                UDS_ListenKey = null;
-                UDS_Connected = false;
-                WebSocket_ReportUpdate("User data stream terminated.", WebSocketUpdateTypes.ConnectionStatus);
-            }
-            else
+            CloseActiveSockets();//<---------------------------Abort all active connections
+
+            APIResponse result = await UserStream_Close();//<--Close User Data Stream.
+            if (result.hasErrors)
                 WebSocket_ReportUpdate("!ERROR! " + result.code + " - " + result.msg, WebSocketUpdateTypes.ConnectionStatusError);
+            uds_keepalive.Enabled = false;//<------------------Stops the Keep Alive timer on seperate thread...
+            uds_reset.Enabled = false;//<----------------------Stops the Reset timer on seperate thread...
+            UDS_ListenKey = null;
+            UDS_Connected = false;
+            WebSocket_ReportUpdate("User data stream terminated.", WebSocketUpdateTypes.ConnectionStatus);
         }
 
         #endregion
         
+
         #region Private Endpoint Handling
 
-        private async Task WebSocket_Connect(string url, int chunkSize = 512)
+        private async Task WebSocket_Connect(WebSocketEndpoints name, string url, int chunkSize = 512)
         {
             url = WebSocketBaseURL + url;
             if(!ActiveSockets.ContainsKey(url))
@@ -1024,12 +1038,16 @@ namespace binance_dotnet
                     {
                         ws = new ClientWebSocket();
                         await ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                        ActiveSockets.Add(url, false);
+                        if (ResetInProgress && url == WebSocketBaseURL + this.UDS_ListenKey)
+                            ResetInProgress = false;
+                        else
+                            WebSocket_ReportUpdate("Websocket endpoint connection opened. (" + url + ")", WebSocketUpdateTypes.EndpointStatus);
+                        ActiveSockets.Add(url, new BinanceWebSocketEndpoint(name, url));
                         await WebSocket_ReceiveChunk(url, ws, chunkSize);
                     }
                     catch (Exception ex)
                     {
-                        WebSocket_ReportUpdate("!ERROR!  " + ex.ToString(), WebSocketUpdateTypes.EndpointStatusError);
+                        WebSocket_ReportUpdate("!ERROR!   (" + url + ")\r\n" + ex.ToString(), WebSocketUpdateTypes.EndpointStatusError);
                     }
                     finally
                     {
@@ -1037,14 +1055,28 @@ namespace binance_dotnet
                             ActiveSockets.Remove(url);
                         if (ws != null)
                             ws.Dispose();
-                        WebSocket_ReportUpdate("Websocket endpoint connection closed.", WebSocketUpdateTypes.EndpointStatus);
+                        if (!ResetInProgress || url != WebSocketBaseURL + this.UDS_ListenKey)
+                            WebSocket_ReportUpdate("Websocket endpoint connection closed. (" + url + ")", WebSocketUpdateTypes.EndpointStatus);
                     }
                 }
             }
             else
             {
-                WebSocket_ReportUpdate("Could not open socket.  Connection already exists.", WebSocketUpdateTypes.EndpointStatus);
+                WebSocket_ReportUpdate("Could not open web socket.  Connection already exists. (" + url + ")", WebSocketUpdateTypes.EndpointStatus);
             }
+        }
+        private bool WebSocket_Disconnect(string url)
+        {
+            bool success = false;
+            url = WebSocketBaseURL + url;
+            if (ActiveSockets.ContainsKey(url))
+            {
+                ActiveSockets[url].Close();//<----Alerts thread to abort.
+                success = true;
+            }
+            else
+                WebSocket_ReportUpdate("No matching active connection exists. (" + url + ")", WebSocketUpdateTypes.EndpointStatus);
+            return success;
         }
         private async Task WebSocket_ReceiveChunk(string url, ClientWebSocket ws, int chunkSize)
         {
@@ -1052,10 +1084,11 @@ namespace binance_dotnet
             while (ws.State == WebSocketState.Open || ws.State == WebSocketState.CloseReceived)
             {
                 var result = await ws.ReceiveAsync(new ArraySegment<byte>(chunkBytes), CancellationToken.None);               
-                if(ActiveSockets[url])
+                if(ActiveSockets[url].CancelFlag)
                     ws.Abort();
                 else
                 {
+                    ActiveSockets[url].ChunksReceived += 1;
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
                         await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
@@ -1092,23 +1125,63 @@ namespace binance_dotnet
         public async void WS_Depth(string symbol)
         {
             string url = symbol.ToLower() + @"@depth";
-            await WebSocket_Connect(url);
+            await WebSocket_Connect(WebSocketEndpoints.Depth, url);
         }
         public async void WS_Klines(string symbol, KlineIntervals interval = KlineIntervals._1m)
         {
             string url = symbol.ToLower() + @"@kline" + interval.ToString();
-            await WebSocket_Connect(url);
+            await WebSocket_Connect(WebSocketEndpoints.Klines, url);
         }
         public async void WS_Trades(string symbol)
         {
             string url = symbol.ToLower() + @"@aggTrade";
-            await WebSocket_Connect(url);
+            await WebSocket_Connect(WebSocketEndpoints.Trades, url);
         }
         public async void WS_UserData()
         {
             await UserStream_Start();
             string url = this.UDS_ListenKey;
-            await WebSocket_Connect(url);
+            await WebSocket_Connect(WebSocketEndpoints.UserData, url);
+        }
+
+        public bool Close_WS_Depth(string symbol)
+        {
+            string url = symbol.ToLower() + @"@depth";
+            return WebSocket_Disconnect(url);
+        }
+        public bool Close_WS_Klines(string symbol, KlineIntervals interval = KlineIntervals._1m)
+        {
+            string url = symbol.ToLower() + @"@kline" + interval.ToString();
+            return WebSocket_Disconnect(url);
+        }
+        public bool Close_WS_Trades(string symbol)
+        {
+            string url = symbol.ToLower() + @"@aggTrade";
+            return WebSocket_Disconnect(url);
+        }
+        public bool Close_WS_UserData()
+        {
+            string url = this.UDS_ListenKey;
+            return WebSocket_Disconnect(url);
+        }
+
+        public List<BinanceWebSocketEndpoint> GetActiveSockets()
+        {
+            return ActiveSockets.Values.ToList();
+        }
+        public void CloseActiveSockets()
+        {
+            var activeSockets = ActiveSockets.Values.ToArray();
+            foreach (var socket in activeSockets)
+                socket.Close(); //<-------------------------Signal socket to abort.
+        }
+        public bool CloseSocket(string url)
+        {
+            return WebSocket_Disconnect(url);
+        }
+        public bool Closeocket(BinanceWebSocketEndpoint activeEndpoint)
+        {
+            return WebSocket_Disconnect(activeEndpoint.Url);
         }
 
         #endregion
@@ -1120,4 +1193,5 @@ namespace binance_dotnet
 
 
     }
+    
 }

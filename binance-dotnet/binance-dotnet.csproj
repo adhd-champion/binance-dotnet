@@ -52,6 +52,7 @@
     <Compile Include="enums\OrderStatuses.cs" />
     <Compile Include="enums\OrderTypes.cs" />
     <Compile Include="enums\TimeStampSources.cs" />
+    <Compile Include="enums\WebSocketEndpoints.cs" />
     <Compile Include="enums\WebSocketUpdateTypes.cs" />
     <Compile Include="enums\WithdrawHistoryStatuses.cs" />
     <Compile Include="objects\APIResponse.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="objects\api_responses\Response_UserDataStream.cs" />
     <Compile Include="objects\api_responses\Response_Withdraw.cs" />
     <Compile Include="objects\api_responses\Response_WithdrawHistory.cs" />
+    <Compile Include="objects\BinanceWebSocketEndpoint.cs" />
     <Compile Include="objects\Keys.cs" />
     <Compile Include="objects\WebSocketUpdateReceivedEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
