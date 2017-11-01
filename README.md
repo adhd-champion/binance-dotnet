@@ -37,6 +37,7 @@ public async Task<string> TestConnectivity()
 }
 ```
 To check if an error has occurred, use the 'hasErrors' property in combination with the 'code' and 'msg' properties.
+```csharp
 public async Task<string> CheckServerTime()
 {
     var result = await Binance.Time();
@@ -45,6 +46,7 @@ public async Task<string> CheckServerTime()
     else
         return result.serverTime.ToString();
 }
+```
 
 ## API Endpoint Examples
 
@@ -204,7 +206,7 @@ public void OpenWebSockets()
     Binance.OpenWebSockets();
 }
 ```
-In order to any close websocket connections, use the 'CloseWebSockets' method:
+In order to close all open websocket connections, use the 'CloseWebSockets' method:
 ```csharp
 public void CloseWebSockets()
 {
@@ -220,3 +222,4 @@ public async void PrintOrderBook_WebSocket()
     Binance.WS_Depth(symbol);
 }
 ```
+
