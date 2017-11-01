@@ -199,27 +199,57 @@ private void WebSocketsUpdateReceived(Object sender, WebSocketUpdateReceivedEven
     }
 }
 ```
-When you execute a websocket method (any method prefaced with 'WS_'), it will automatically start a stream for you if one isn't already open.  If you prefer, you can open a websocket stream manually using the 'OpenWebSockets' method:
+When you execute a websocket method (any method prefaced with 'WS_'), it will automatically start a user data stream for you if one isn't already open.  If you prefer, you can open a websocket stream manually using the 'OpenUserDataStream' method:
 ```csharp
-public void OpenWebSockets()
+public void OpenUserDataStream()
 {
-    Binance.OpenWebSockets();
+    Binance.OpenUserDataStream();
 }
 ```
-In order to close all open websocket connections, use the 'CloseWebSockets' method:
+In order to close user data stream and all active websocket connections, use the 'CloseUserDataStream' method:
 ```csharp
-public void CloseWebSockets()
+public void CloseUserDataStream()
 {
-    Binance.CloseWebSockets();
+    Binance.CloseUserDataStream();
 }
 ```
 
 ### Getting order book via websockets
 ```csharp
-public async void PrintOrderBook_WebSocket()
+public void PrintOrderBook_WebSocket()
 {
     string symbol="ltcbtc";
     Binance.WS_Depth(symbol);
 }
 ```
 
+### Closing websocket endpoints
+To close particular socket endpoint connections, you have a couple of options:
+```csharp
+public void CloseSocket_Option1()
+{
+	// Closes all "Depth" sockets
+    var activeSockets = Binance.GetActiveSockets();
+	foreach(var socket in activeSockets)
+	{
+		if(socket.Name == WebSocketEndpoints.Depth)
+			Binance.CloseSocket(socket);
+	}
+    Binance.WS_Depth(symbol);
+}
+```
+```csharp
+public void CloseSocket_Option2()
+{
+	// Closes "Depth" socket for only "ltcbtc"
+    string symbol="ltcbtc";
+    Binance.Close_WS_Depth(symbol);
+}
+```
+If you would like to close all active sockets, but keep your user data stream alive, use the 'CloseActiveSockets' method:
+```csharp
+public void CloseActiveSockets()
+{
+    Binance.CloseActiveSockets();
+}
+```
