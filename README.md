@@ -1,14 +1,5 @@
 # binance-dotnet
-Binance Dotnet is a C# .Net class library to assist in utilizing the Binance Web API.
-It currently implements the following Binance API features:
-- [x] Original API
-- [x] Withdraw API
-- [x] User Stream API
-- [x] Websockets API
-
-This project is now complete!
-For more documentation on the Binance API, visit https://www.binance.com/restapipub.html
-
+Binance Dotnet is a C# .Net class library to assist in utilizing the Binance Web API.  For more documentation on the Binance API, visit https://www.binance.com/restapipub.html
 
 
 ## Using binance-dotnet
@@ -46,6 +37,7 @@ public async Task<string> TestConnectivity()
 }
 ```
 To check if an error has occurred, use the 'hasErrors' property in combination with the 'code' and 'msg' properties.
+```csharp
 public async Task<string> CheckServerTime()
 {
     var result = await Binance.Time();
@@ -54,6 +46,7 @@ public async Task<string> CheckServerTime()
     else
         return result.serverTime.ToString();
 }
+```
 
 ## API Endpoint Examples
 
@@ -206,7 +199,14 @@ private void WebSocketsUpdateReceived(Object sender, WebSocketUpdateReceivedEven
     }
 }
 ```
-In order to any open websocket connections, use the 'CloseWebSockets' method:
+When you execute a websocket method (any method prefaced with 'WS_'), it will automatically start a stream for you if one isn't already open.  If you prefer, you can open a websocket stream manually using the 'OpenWebSockets' method:
+```csharp
+public void OpenWebSockets()
+{
+    Binance.OpenWebSockets();
+}
+```
+In order to close all open websocket connections, use the 'CloseWebSockets' method:
 ```csharp
 public void CloseWebSockets()
 {
@@ -222,3 +222,4 @@ public async void PrintOrderBook_WebSocket()
     Binance.WS_Depth(symbol);
 }
 ```
+
