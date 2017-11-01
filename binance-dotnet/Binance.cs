@@ -910,11 +910,11 @@ namespace binance_dotnet
 
         #region UserDataStream API Methods
 
-        public async Task<bool> OpenWebSockets()
+        public async Task<bool> OpenUserDataStream()
         {
             return await UserStream_Start();
         }
-        public void CloseWebSockets()
+        public void CloseUserDataStream()
         {
             UserStream_Stop();
         }
@@ -1179,7 +1179,7 @@ namespace binance_dotnet
         {
             return WebSocket_Disconnect(url);
         }
-        public bool Closeocket(BinanceWebSocketEndpoint activeEndpoint)
+        public bool CloseSocket(BinanceWebSocketEndpoint activeEndpoint)
         {
             return WebSocket_Disconnect(activeEndpoint.Url);
         }
