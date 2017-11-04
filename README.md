@@ -1,3 +1,5 @@
+
+![alt text](https://raw.githubusercontent.com/adhd-champion/binance-dotnet/master/logo.png "binance-dotnet")
 # binance-dotnet
 Binance Dotnet is a C# .Net class library to assist in utilizing the Binance Web API.  For more documentation on the Binance API, visit https://www.binance.com/restapipub.html
 
