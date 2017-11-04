@@ -185,8 +185,26 @@ public async void PrintCurrentPositions()
 }
 ```
 
-## Websocket Endpoint Examples
-To use the websockets implementation, you will need to utilize the 'WebSocketUpdateReceived' event as shown below:
+## Websockets API
+There are two primary pieces to accessing the websockets api:
+1. User Data Stream - This is the connection initiated by the client that enables communication to the websocket endpoints.  It has three sub-methods:
+   1. Connect - Initiate a tunnel between the client and server.
+   1. Keep Alive - An echo request that must be sent at a regular interval to keep the server from closing the tunnel.
+   1. Disconnect - Cleanly closes the tunnel.
+1. Websocket Endpoints - These are the actual endpoints that are websocket-enabled.  Current version includes the following endpoints:
+   1. Depth - Buy/sell wall updates for a symbol
+   1. Kline - Candlestick updates for a symbol
+   1. Trades - Trade updates for a symbol
+   1. User Data - Updates to you're account
+
+### Things to keep in mind...
+There are a few things to keep in mind when using the websockets API:
+* User data stream keep alive interval must be smaller than 60 seconds or the connection will timeout.
+* The listen key received in a user data stream will stop working after an hour or so and therefore it has to be reset.
+* When resetting the listen key, all but the User Data endpoint can remain running.  You will have to temporarily close the user data stream and reopen using your new listen key.
+
+### Examples
+To use the websockets implementation in binance-dotnet, you will need to utilize the 'WebSocketUpdateReceived' event as shown below:
 ```csharp
 static void Main()
 {
@@ -201,6 +219,15 @@ private void WebSocketsUpdateReceived(Object sender, WebSocketUpdateReceivedEven
     }
 }
 ```
+To change your keep-alive and connection reset intervals, set the value of the 'UDS_KeepAliveInterval' and 'UDS_ResetInterval' properties in miliseconds.
+```csharp
+public void ConfigureConnectionIntervals()
+{
+    Binance.UDS_KeepAliveInterval = 30000;//<--- 30 Seconds
+    Binance.UDS_ResetInterval = 3000000;//<----- 50 Minutes
+}
+```
+
 When you execute a websocket method (any method prefaced with 'WS_'), it will automatically start a user data stream for you if one isn't already open.  If you prefer, you can open a websocket stream manually using the 'OpenUserDataStream' method:
 ```csharp
 public void OpenUserDataStream()
@@ -216,7 +243,7 @@ public void CloseUserDataStream()
 }
 ```
 
-### Getting order book via websockets
+#### Getting order book via websockets
 ```csharp
 public void PrintOrderBook_WebSocket()
 {
@@ -225,7 +252,7 @@ public void PrintOrderBook_WebSocket()
 }
 ```
 
-### Closing websocket endpoints
+#### Closing websocket endpoints
 To close particular socket endpoint connections, you have a couple of options:
 ```csharp
 public void CloseSocket_Option1()
