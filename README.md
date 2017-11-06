@@ -167,7 +167,7 @@ public async void PrintOpenOrders()
     string symbol = "LTCBTC";
     var result = await Binance.Open_Orders(symbol);
 
-    Console.WriteLine(String.Format("| {0,-7} | {1,-5} | {2,-10} | {3,-12} | {4,-12} |", "OrderID", "Asser", "Price", "Orig Qty", "Exec Qty"));
+    Console.WriteLine(String.Format("| {0,-7} | {1,-5} | {2,-10} | {3,-12} | {4,-12} |", "OrderID", "Asset", "Price", "Orig Qty", "Exec Qty"));
     foreach (var order in result.orders)
         Console.WriteLine(String.Format("| {0,7} | {1,5} | {2,10} | {3,12} | {4,12} |", order.orderId, order.symbol, order.price, order.origQty, order.executedQty));
 }
