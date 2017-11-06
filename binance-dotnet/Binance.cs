@@ -23,6 +23,7 @@ namespace binance_dotnet
             ReceiveWindow = DEFAULT_RecieveWindow;
             UseReceiveWindow = DEFAULT_UseReceiveWindow;
             TimeStampSource = DEFAULT_TimeStampSources;
+            LocalTimeOffset = null;
             APIKey = apiKey;
             APISecret = secretKey;
 
@@ -46,12 +47,13 @@ namespace binance_dotnet
         #endregion
 
         #region Properties
-
+        
         public string APIKey { private get; set; }
         public string APISecret { private get; set; }
         public long ReceiveWindow { get; set; }
         public bool UseReceiveWindow { get; set; }
         public TimeStampSources TimeStampSource { get; set; }
+        private long? LocalTimeOffset = null;
         public double UDS_KeepAliveInterval { get; set; }
         public double UDS_ResetInterval { get; set; }
 
@@ -78,16 +80,22 @@ namespace binance_dotnet
                 throw new FileNotFoundException("Key file could not be found.");
         }
 
-        private static string FormatSymbol(string symbol)
+        private static string FormatSymbol(string symbol, bool forWebSockets = false)
         {
             if (!string.IsNullOrEmpty(symbol))
-                return symbol.ToUpper();
+                if (!forWebSockets)
+                    return symbol.ToUpper();
+                else
+                    return symbol.ToLower();
             else
-                return null;
+                throw new Exception("Null Symbol encountered.");
         }
-        private static string FormatSymbol(string baseAsset, string quoteAsset)
+        private static string FormatSymbol(string baseAsset, string quoteAsset, bool forWebSockets = false)
         {
-            return baseAsset.ToUpper() + quoteAsset.ToUpper();
+            if (!string.IsNullOrEmpty(baseAsset) && !string.IsNullOrEmpty(quoteAsset))
+                return FormatSymbol(baseAsset + quoteAsset, forWebSockets);
+            else
+                throw new Exception("Null Base or Quote asset encountered.");
         }
 
         private Dictionary<string, object> CreateParamDict(params object[] parameterList)
@@ -100,6 +108,11 @@ namespace binance_dotnet
             return dict;
         }
 
+        private long GetLocalUTCTime()
+        {
+            return (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+        }
+
         private async Task<string> GetTimestampForRequest()
         {
             switch (this.TimeStampSource)
@@ -108,11 +121,18 @@ namespace binance_dotnet
                     Response_Time time = await Time();
                     return time.serverTime.ToString();
                 case TimeStampSources.Local:
-                    return ((long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds).ToString();
+                    if (!LocalTimeOffset.HasValue)
+                        LocalTimeOffset = await GetLocalTimeOffset();
+                    long localTime = GetLocalUTCTime() - LocalTimeOffset.Value;
+                    return localTime.ToString();
             }
             return null;
         }
-
+        private async Task<long> GetLocalTimeOffset()
+        {
+            Response_Time serverTime = await Time();
+            return serverTime.serverTime - GetLocalUTCTime();
+        }
         #endregion
 
         #region API Requests
@@ -904,17 +924,16 @@ namespace binance_dotnet
         private Dictionary<string, BinanceWebSocketEndpoint> ActiveSockets;
         private DateTime WebSocket_Start;
         private DateTime WebSocket_Reset;
-       
 
         #endregion
 
         #region UserDataStream API Methods
 
-        public async Task<bool> OpenUserDataStream()
+        public async Task<bool> OpenWebSockets()
         {
             return await UserStream_Start();
         }
-        public void CloseUserDataStream()
+        public void CloseWebSockets()
         {
             UserStream_Stop();
         }
@@ -1023,7 +1042,6 @@ namespace binance_dotnet
 
         #endregion
         
-
         #region Private Endpoint Handling
 
         private async Task WebSocket_Connect(WebSocketEndpoints name, string url, int chunkSize = 512)
@@ -1124,17 +1142,17 @@ namespace binance_dotnet
 
         public async void WS_Depth(string symbol)
         {
-            string url = symbol.ToLower() + @"@depth";
+            string url = FormatSymbol(symbol, true) + @"@depth";
             await WebSocket_Connect(WebSocketEndpoints.Depth, url);
         }
         public async void WS_Klines(string symbol, KlineIntervals interval = KlineIntervals._1m)
         {
-            string url = symbol.ToLower() + @"@kline" + interval.ToString();
+            string url = FormatSymbol(symbol, true) + @"@kline" + interval.ToString();
             await WebSocket_Connect(WebSocketEndpoints.Klines, url);
         }
         public async void WS_Trades(string symbol)
         {
-            string url = symbol.ToLower() + @"@aggTrade";
+            string url = FormatSymbol(symbol, true) + @"@aggTrade";
             await WebSocket_Connect(WebSocketEndpoints.Trades, url);
         }
         public async void WS_UserData()
@@ -1146,17 +1164,17 @@ namespace binance_dotnet
 
         public bool Close_WS_Depth(string symbol)
         {
-            string url = symbol.ToLower() + @"@depth";
+            string url = FormatSymbol(symbol, true) + @"@depth";
             return WebSocket_Disconnect(url);
         }
         public bool Close_WS_Klines(string symbol, KlineIntervals interval = KlineIntervals._1m)
         {
-            string url = symbol.ToLower() + @"@kline" + interval.ToString();
+            string url = FormatSymbol(symbol, true) + @"@kline" + interval.ToString();
             return WebSocket_Disconnect(url);
         }
         public bool Close_WS_Trades(string symbol)
         {
-            string url = symbol.ToLower() + @"@aggTrade";
+            string url = FormatSymbol(symbol, true) + @"@aggTrade";
             return WebSocket_Disconnect(url);
         }
         public bool Close_WS_UserData()
@@ -1179,7 +1197,7 @@ namespace binance_dotnet
         {
             return WebSocket_Disconnect(url);
         }
-        public bool CloseSocket(BinanceWebSocketEndpoint activeEndpoint)
+        public bool Closeocket(BinanceWebSocketEndpoint activeEndpoint)
         {
             return WebSocket_Disconnect(activeEndpoint.Url);
         }
@@ -1189,8 +1207,6 @@ namespace binance_dotnet
         #endregion
 
         #endregion
-
-
 
     }
     
